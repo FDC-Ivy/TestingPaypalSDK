@@ -1,47 +1,72 @@
 package com.example.testingpaypalsdk;
 
 import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
 public class PaymentDetails extends AppCompatActivity {
 
-    TextView txtId, txtAmount, txtStatus;
+    private TextView txtId, txtAmount, txtStatus;
+
+    private static final String PAYMENT_DETAILS = "PaymentDetails";
+    private static final String PAYMENT_AMOUNT = "PaymentAmount";
+    private static final String RESPONSE = "response";
+    private static final String ID = "id";
+    private static final String STATE = "state";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_payment_details);
 
+        initializeViews();
+        processPaymentData(getIntent());
+    }
+
+    private void initializeViews() {
+        txtStatus = findViewById(R.id.txtStatus);
         txtId = findViewById(R.id.txtId);
         txtAmount = findViewById(R.id.txtAmount);
-        txtStatus = findViewById(R.id.txtStatus);
+    }
 
-        Intent intent = getIntent();
+    private void processPaymentData(Intent intent) {
+        if (intent == null) {
+            displayToast("No payment details found");
+            return;
+        }
 
-        try{
-            JSONObject jsonObject = new JSONObject(intent.getStringExtra("PaymentDetails"));
-            showDetails(jsonObject.getJSONObject("response"), intent.getStringExtra("PaymentAmount"));
+        String details = intent.getStringExtra(PAYMENT_DETAILS);
+        String amount = intent.getStringExtra(PAYMENT_AMOUNT);
 
-        }catch (JSONException e){
-            e.printStackTrace();
-            Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
+        if (details == null || amount == null) {
+            displayToast("Payment data is missing");
+            return;
+        }
+
+        try {
+            JSONObject jsonObject = new JSONObject(details);
+            JSONObject response = jsonObject.getJSONObject(RESPONSE);
+            displayPaymentDetails(response, amount);
+        } catch (JSONException e) {
+            displayToast("Failed to parse payment details: " + e.getMessage());
         }
     }
 
-    private void showDetails(JSONObject response, String paymentAmount){
-        try{
-            txtId.setText(response.getString("id"));
-            txtStatus.setText(response.getString("state"));
-            txtAmount.setText(response.getString(String.format("$%s", paymentAmount)));
-        }catch (JSONException e){
-            e.printStackTrace();
+    private void displayPaymentDetails(JSONObject response, String amount) {
+        try {
+            txtId.setText(response.optString(ID, "N/A"));
+            txtStatus.setText(response.optString(STATE, "N/A"));
+            txtAmount.setText(String.format("$%s", amount));
+        } catch (Exception e) {
+            displayToast("Error displaying payment information");
         }
+    }
+
+    private void displayToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 }
