@@ -9,9 +9,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Run tests & report coverage
+      - name: Install Code Climate Test Reporter
         run: |
-          export CC_TEST_REPORTER_ID=${{ secrets.CC_TEST_REPORTER_ID }}
-          ./cc-test-reporter before-build
+          curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > cc-test-reporter
+          chmod +x cc-test-reporter
+          mv cc-test-reporter /usr/local/bin/
+
+      - name: Run tests & report coverage
+        env:
+          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+        run: |
+          cc-test-reporter before-build
           npm test -- --coverage || true
-          ./cc-test-reporter after-build --exit-code $?
+          cc-test-reporter after-build --exit-code $?
