@@ -1,0 +1,17 @@
+name: CodeClimate Quality Check
+
+on: [push, pull_request]
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Run tests & report coverage
+        run: |
+          export CC_TEST_REPORTER_ID=${{ secrets.CC_TEST_REPORTER_ID }}
+          ./cc-test-reporter before-build
+          npm test -- --coverage || true
+          ./cc-test-reporter after-build --exit-code $?
